@@ -32,22 +32,22 @@ def builder(r):
         # print(card)
         # Check Settlements
         if settlement == False:
-            settlement = settlement_builder(card) # in BuildingRequirements
+            settlement = settlement_builder(card,r) # in BuildingRequirements
             if settlement == True:
                 s = count
         # Check City
         if city == False:
-            city = city_builder(card)
+            city = city_builder(card,r)
             if city == True:
                 c = count
         # Check Devo Cards
         if devo == False:
-            devo = devo_card(card)
+            devo = devo_card(card,r)
             if devo == True:
                 d = count
         # Check road
         if road == False:
-            road = road_builder(card)
+            road = road_builder(card,r)
             if road == True:
                 ro = count
         if role == 7:

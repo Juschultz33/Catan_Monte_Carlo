@@ -1,52 +1,92 @@
-def building_resource(card, n_brick=False, n_lumber=False, n_ore=False, three=False,
-                      n_grain=False, n_sheep=False, b_city=False, t_brick=False,
-                      t_lumber=False, t_grain=False, t_ore=False, t_sheep=False):
-    
-    trade_values = {'brick': 4, 'lumber': 4, 'grain': 4, 'ore': 4, 'sheep': 4}
-    
-    if three:
-        for key in trade_values:
-            trade_values[key] = 3
-    
-    specific_trades = {'brick': t_brick, 'lumber': t_lumber, 'grain': t_grain, 'ore': t_ore, 'sheep': t_sheep}
-    for resource, trade in specific_trades.items():
-        if trade:
-            trade_values[resource] = 2
-    
+def building_resource(card,r, n_brick=False, n_lumber=False, n_ore=False,
+                      n_grain=False, n_sheep=False, b_city=False, ):
+
+    # We need to set the trading amount for each resources.
+    # There might be a way to do this better but I think this works.
+    # We set this equal to 4 start but it will change
     s = 0
-    
-    def calculate_points(resource, need_exact, b_city_limit=None):
-        nonlocal s
-        trade_value = trade_values[resource]
-        if need_exact:
-            if b_city_limit is not None:
-                s += min(card[resource], b_city_limit)
-                s += (card[resource] - min(card[resource], b_city_limit)) // trade_value
+    b_trade = 4
+    l_trade = 4
+    g_trade = 4
+    o_trade = 4
+    s_trade = 4
+
+    # if we have a 3:1 trade everything needs to be at least 3:1
+    if 'three' in r['trade']:
+        b_trade = 3
+        l_trade = 3
+        g_trade = 3
+        o_trade = 3
+        s_trade = 3
+
+    # The following code is to change for 2:1 for every resource.
+    if 'brick' in r['trade']:
+        b_trade = 2
+
+    if 'lumber' in r['trade']:
+        l_trade = 2
+
+    if 'grain' in r['trade']:
+        g_trade = 2
+
+    if 'ore' in r['trade']:
+        o_trade = 2
+
+    if 'sheep' in r['trade']:
+        s_trade = 2
+
+    # Brick
+    if n_brick == True:
+        if card['brick'] > 0:
+            s += 1
+            s += (card['brick']-1)//b_trade
+    else:
+        s += card['brick']//b_trade
+
+    # Lumber
+    if n_lumber == True:
+        if card['lumber'] > 0:
+            s += 1
+            s += (card['lumber']-1)//l_trade
+    else:
+        s += card['lumber']//l_trade
+
+    # Sheep
+    if n_sheep == True:
+        if card['sheep'] > 0:
+            s += 1
+            s += (card['sheep']-1)//s_trade
+    else:
+        s += card['sheep']//s_trade
+
+    # Grain
+    if n_grain == True:
+        if b_city == True:
+            if card['grain'] <= 2:
+                s += card['grain']
             else:
-                if card[resource] > 0:
-                    s += 1
-                    s += (card[resource] - 1) // trade_value
+                s += 2
+                s += (card['grain']-2)//g_trade
         else:
-            s += card[resource] // trade_value
-    
-    calculate_points('brick', n_brick)
-    calculate_points('lumber', n_lumber)
-    calculate_points('sheep', n_sheep)
-    
-    if n_grain:
-        if b_city:
-            calculate_points('grain', True, b_city_limit=2)
-        else:
-            calculate_points('grain', True)
+            if card['grain'] > 0:
+                s += 1
+                s += (card['grain']-1)//g_trade
     else:
-        calculate_points('grain', False)
-    
-    if n_ore:
-        if b_city:
-            calculate_points('ore', True, b_city_limit=3)
+        s += card['grain']//g_trade
+
+    # ore
+    if n_ore == True:
+        if b_city == True:
+            if card['ore'] <= 3:
+                s += card['ore']
+            else:
+                s += 3
+                s += (card['ore']-3)//o_trade
         else:
-            calculate_points('ore', True)
+            if card['ore'] > 0:
+                s += 1
+                s += (card['ore']-1)//o_trade
     else:
-        calculate_points('ore', False)
-    
+        s += card['ore']//o_trade
+
     return s
