@@ -88,8 +88,26 @@ Board = [hex1, hex2, hex3, hex4, hex5, hex6, hex7, hex8, hex9, hex10,
 gameboard = pd.DataFrame(Board, columns=["HexNum", "Resource", "Value"])
 
 
-
-
+# %%
+# print(f"""
+# ================
+#  - - - - - - -
+# - - F P W - -
+#  - W H F M - -
+# - M P W P F -
+#  - F H D H - -
+# - - M P W - -
+#  - - - - - - -
+# ================
+#  - - - - - - -
+#  - - {Board[16][2]} {Board[17][2]} {Board[18][2]} - -
+#  - {Board[12][2]} {Board[13][2]} {Board[14][2]} {Board[15][2]} - -
+# - {Board[7][2]} {Board[8][2]} {Board[9][2]} {Board[10][2]} {Board[11][2]} -
+# - - {Board[3][2]} {Board[4][2]} {Board[5][2]} {Board[6][2]} - -
+#  - - {Board[0][2]} {Board[1][2]} {Board[2][2]} - -
+#  - - - - - - -
+# ================	
+# """)
 # %%
 
 ################################################################################
@@ -223,6 +241,7 @@ if resource in r19:
 
 i1 = r1.copy()
 i1['intersection'] = [1,2,9]
+i1['location'] = hex1[1:]
 
 i2 = r1.copy()
 i2['intersection'] = [1,2,3]
@@ -480,58 +499,126 @@ dicts = [i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12,
 		i34, i35, i36, i37, i38, i39, i40, i41, i42, i43, i44,
 		i45, i46, i47, i48, i49, i50, i51, i52, i53, i54]
 
-Intersections_used = [20]
 
+
+
+#%%
+Intersections_used = []
+SimulationCount = 1000
+rows = []
+keys_to_check = list(i1.keys())[:5]
+value = 0
+for d in dicts:
+	value += 1
+	if all(not d[key] for key in keys_to_check):
+		# value += 1
+		pass
+	else:
+		settlement = 0
+		road = 0
+		city = 0
+		devo = 0
+		rober = 0
+		myAvg = 0
+		# value += 1
+
+
+		for i in range(SimulationCount):
+			my_list = builder(d)
+			settlement += my_list[1]
+			road += my_list[0]
+			city += my_list[2]
+			devo += my_list[3]
+			rober += my_list[4]
+		rows.append({"settlement_builder": settlement / SimulationCount,
+    	             "road_builder": road / SimulationCount,
+    	             "city_builder": city / SimulationCount,
+    	             "devo_card": devo / SimulationCount,
+    	             "robber": rober / SimulationCount,
+					 "intersection": value})
+		df = pd.DataFrame(rows)
+df['InterAvg'] = df[['settlement_builder', 'road_builder', 'city_builder', 'devo_card']].mean(axis=1)
+df
+
+#%%
+
+min_setl = df['settlement_builder'].min()
+min_road = df['road_builder'].min()
+min_city = df['city_builder'].min()
+min_devo = df['devo_card'].min()
+min_inAv = df['InterAvg'].min()
+intersection_setl = df[df['settlement_builder'] == min_setl]['intersection'].values[0]
+intersection_road = df[df['road_builder'] == min_road]['intersection'].values[0]
+intersection_city = df[df['city_builder'] == min_city]['intersection'].values[0]
+intersection_devo = df[df['devo_card'] == min_devo]['intersection'].values[0]
+intersection_avg = df[df['InterAvg'] == min_inAv]['intersection'].values[0]
+
+print(f'Settlements: {min_setl}, Intersection {intersection_setl}')
+print(f'road: {min_road}, Intersection {intersection_road}')
+print(f'city: {min_city}, Intersection {intersection_city}')
+print(f'devo: {min_devo}, Intersection {intersection_devo}')
+print(f'Min_Average: {min_inAv}, Intersection {intersection_avg}')
+
+# print("Minimum settlement_builder value:", min_settlement)
+# print("Robber value associated with the minimum settlement_builder:", intersection)
+#%%
+My_Intersections = []
+
+Intersections_used = My_Intersections + Intersections_used
 taken_section = []
 for i in range(len(Intersections_used)):
 	taken_section.extend(dicts[Intersections_used[i]-1]['intersection'])
 # %%
-# def sectionCombo(dicts, taken_section):
-# 	for i in range(0,54):
-# 		if (i + 1) not in taken_section:
-# 			for j in range(1,55):
-# 				if (i + 1) < j and j not in taken_section:
-# 					if j in dicts[i]['intersection']:
-# 						pass
-# 					else: 
-# 						section_name = f'section{i+1}<>{j}'
-# 						print(f'{section_name} = {{}}')
-# 						print(f'for key in i{i+1}.keys():')
-# 						print('\tif key == "trade":')
-# 						print(f'\t\t{section_name}[key] = list(set(i{i+1}[key] + i{j}[key]))')
-# 						print('\tif key == "intersection":')
-# 						print(f'\t\tpass')
-# 						print('\telse:')
-# 						print(f'\t\t{section_name}[key] = i{i+1}[key] + i{j}[key]')
-# 						print('\n')
-# 						print(f'sections.append({section_name})')
-# 						print('\n')
-
 
 sections = []
 
 code_to_execute = ""
 
-for i in range(0,54):
-		if (i + 1) not in taken_section:
-			for j in range(1,55):
+if My_Intersections:
+	for i   in My_Intersections:
+		for j in range(1, 55):
+			if j in dicts[i - 1]['intersection']:
+				pass
+			else:
+				section_name = f'section{i}{j}'
+				code_to_execute += f'{section_name} = {{}}\n'
+				code_to_execute += f'for key in i{i-1}.keys():\n'
+				code_to_execute += '\tif key == "trade":\n'
+				code_to_execute += f'\t\t{section_name}[key] = list(set(i{i-1}[key] + i{j}[key]))\n'
+				code_to_execute += '\tif key == "intersection":\n'
+				code_to_execute += '\t\tpass\n'
+				code_to_execute += '\telse:\n'
+				code_to_execute += f'\t\t{section_name}[key] = i{i}[key] + i{j}[key]\n'
+				code_to_execute += '\n'
+				code_to_execute += f'sections.append({section_name})\n'
+				code_to_execute += f'{section_name}["Intersectoins"] = "{section_name}"'
+				code_to_execute += '\n'
+
+                # Add a print statement to debug
+				print(f"Generated code for section {section_name}")
+else:
+	for i in range(0, 54):
+		if ((i + 1) not in taken_section):
+			for j in range(1, 55):
 				if ((i + 1) < j) and (j not in taken_section):
 					if j in dicts[i]['intersection']:
 						pass
 					else:
-						section_name = f'section{i+1}{j}'
+						section_name = f'section{i + 1}{j}'
 						code_to_execute += f'{section_name} = {{}}\n'
-						code_to_execute += f'for key in i{i+1}.keys():\n'
+						code_to_execute += f'for key in i{i + 1}.keys():\n'
 						code_to_execute += '\tif key == "trade":\n'
-						code_to_execute += f'\t\t{section_name}[key] = list(set(i{i+1}[key] + i{j}[key]))\n'
+						code_to_execute += f'\t\t{section_name}[key] = list(set(i{i + 1}[key] + i{j}[key]))\n'
 						code_to_execute += '\tif key == "intersection":\n'
 						code_to_execute += '\t\tpass\n'
 						code_to_execute += '\telse:\n'
-						code_to_execute += f'\t\t{section_name}[key] = i{i+1}[key] + i{j}[key]\n'
+						code_to_execute += f'\t\t{section_name}[key] = i{i + 1}[key] + i{j}[key]\n'
 						code_to_execute += '\n'
 						code_to_execute += f'sections.append({section_name})\n'
+						code_to_execute += f'{section_name}["Intersectoins"] = "{section_name}"'
 						code_to_execute += '\n'
-                		# Add a print statement to debug
+
+						# Add a print statement to debug
 						print(f"Generated code for section {section_name}")
 
 # Check the content of code_to_execute
@@ -543,9 +630,44 @@ if code_to_execute:
 else:
     print("No code to execute")
 
+#%%
+
+rows = []
+for sec in sections:
+    settlement = 0
+    road = 0
+    city = 0
+    devo = 0
+    rober = 0
+	
+
+    for i in range(1000):
+        my_list = builder(sec)
+        settlement += my_list[1]
+        road += my_list[0]
+        city += my_list[2]
+        devo += my_list[3]
+        rober += my_list[4]
+
+    rows.append({"settlement_builder": settlement / 1000,
+                 "road_builder": road / 1000,
+                 "city_builder": city / 1000,
+                 "devo_card": devo / 1000,
+                 "robber": rober / 1000,
+				 "intersection": sec["Intersectoins"]})
+
+df = pd.DataFrame(rows)
+df
 
 # %%
-mycode = sectionCombo(dicts, taken_section)
+
+
 # %%
-exec(sectionCombo(dicts, taken_section))
-# %%
+min_settlement = df['settlement_builder'].min()
+intersection = df[df['settlement_builder'] == min_settlement]['intersection'].values[0]
+
+print("Minimum settlement_builder value:", min_settlement)
+print("Robber value associated with the minimum settlement_builder:", intersection)
+
+
+
